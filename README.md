@@ -1,10 +1,12 @@
 # Animated Pixel Art Studio
 
-**An AI agent skill that turns a creative brief into editable pixel animation and real video files.**
+**Build the art as components. Compose the scene. Animate the details.**
 
 [Bahasa Indonesia](README.id.md) · [Agent skill](skills/animated-pixel-art-studio/SKILL.md) · [Scene format](skills/animated-pixel-art-studio/references/scene-format.md) · [MIT license](LICENSE)
 
-![Component-based environment study](docs/gallery/highland.png)
+![Alpine environment art direction concept](docs/gallery/art-direction.png)
+
+*Art direction concept created with an image generator. This image shows the intended visual direction; it is not an output of the bundled renderer.*
 
 Describe the scene to an agent, let it author sprites and motion, and render locally. The repository supplies the production workflow, a small deterministic renderer, and original starter scenes. It does **not** contain a trained text-to-video model or a graphical editor.
 
@@ -30,9 +32,7 @@ python studio.py render work/highland/scene.json --out output/highland --formats
 
 The builder writes **14 component layers**, individual transparent PNGs/cels, `art-plan.json` and an editable `scene.json`. The study uses a shared 42-color palette, 640x360 native pixels, 10 fps and 7 seconds. MP4 is enlarged to 1920x1080. Omit `mp4` when FFmpeg is unavailable.
 
-![Highland Waystation loop](docs/gallery/highland.gif)
-
-[MP4](docs/gallery/highland.mp4) | [Layer breakdown](docs/gallery/highland-layers.png) | [Component workflow](skills/animated-pixel-art-studio/references/component-workflow.md)
+[Technical study GIF](docs/gallery/highland.gif) | [MP4](docs/gallery/highland.mp4) | [Layer breakdown](docs/gallery/highland-layers.png) | [Component workflow](skills/animated-pixel-art-studio/references/component-workflow.md)
 
 In the layer breakdown, the left column shows each component on a preview checkerboard and the right shows the cumulative composition. Native isolated assets retain transparency. Edit or replace a component PNG and render again to a new directory. `studio.py layers ... --frame 35` reviews another moment. The builder is a deterministic authored example, not a text-to-image model. **This study demonstrates the workflow; it does not yet match the detailed professional reference that motivated it.**
 
@@ -107,16 +107,13 @@ The agent must actually customize scenes for a new brief. Presets are starting p
 
 ## Gallery
 
-| Rainy cafe | Campfire | Walk cycle |
-| --- | --- | --- |
-| ![Rainy cafe animated](docs/gallery/rainy-cafe.gif) | ![Campfire animated](docs/gallery/campfire.gif) | ![Walk cycle animated](docs/gallery/walk-cycle.gif) |
-| [MP4](docs/gallery/rainy-cafe.mp4) | [MP4](docs/gallery/campfire.mp4) | [MP4](docs/gallery/walk-cycle.mp4) |
+Technical starter examples: [rainy cafe GIF](docs/gallery/rainy-cafe.gif) / [MP4](docs/gallery/rainy-cafe.mp4), [campfire GIF](docs/gallery/campfire.gif) / [MP4](docs/gallery/campfire.mp4), [walk cycle GIF](docs/gallery/walk-cycle.gif) / [MP4](docs/gallery/walk-cycle.mp4).
 
 These are small, code-authored starter animations included under MIT. The cafe/campfire are 160x90 native pixels; the character study is 96x64. All examples run for four seconds at 12 fps. GIF previews use native dimensions; MP4 and PNG use integer enlargement.
 
 ### Made by an agent using the skill
 
-![Little Beacon robot loop](docs/gallery/robot.gif)
+[Little Beacon robot GIF](docs/gallery/robot.gif)
 
 An independent agent used this skill with a new brief to create **Little Beacon**, an original 2-second floating robot loop. [MP4](docs/gallery/robot.mp4) · [Editable scene](examples/robot/scene.json) · [Brief](examples/robot/brief.md). This demonstrates one successful trial, not a guarantee of quality across every agent or prompt.
 

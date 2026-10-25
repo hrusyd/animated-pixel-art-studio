@@ -1,10 +1,12 @@
 # Animated Pixel Art Studio
 
-**Skill AI agent untuk mengubah brief menjadi animasi pixel art, video, dan source yang bisa diedit.**
+**Buat komponen art. Susun adegannya. Animasikan detailnya.**
 
 [English](README.md) · [Skill agent](skills/animated-pixel-art-studio/SKILL.md) · [Format scene](skills/animated-pixel-art-studio/references/scene-format.md) · [Lisensi MIT](LICENSE)
 
-![Studi lingkungan dari komponen terpisah](docs/gallery/highland.png)
+![Konsep arah art lingkungan pegunungan](docs/gallery/art-direction.png)
+
+*Konsep arah art dibuat dengan generator gambar. Visual ini menunjukkan arah yang dituju, belum merupakan hasil renderer bawaan repo.*
 
 Jelaskan ide ke AI agent. Agent membuat sprite, komposisi, dan gerakan, lalu menjalankan renderer lokal. Repo ini berisi workflow dan alat render, bukan model text-to-video atau aplikasi editor grafis.
 
@@ -30,9 +32,7 @@ python studio.py render work/highland/scene.json --out output/highland --formats
 
 Builder menghasilkan **14 layer komponen**, PNG/cel transparan terpisah, `art-plan.json`, dan `scene.json` yang bisa diedit. Studi ini menggunakan 42 warna bersama, resolusi native 640x360, 10 fps, dan durasi 7 detik. MP4 diperbesar menjadi 1920x1080. Hapus `mp4` dari perintah bila FFmpeg belum tersedia.
 
-![Animasi Highland Waystation](docs/gallery/highland.gif)
-
-[MP4](docs/gallery/highland.mp4) | [Susunan layer](docs/gallery/highland-layers.png) | [Workflow komponen](skills/animated-pixel-art-studio/references/component-workflow.md)
+[GIF studi teknis](docs/gallery/highland.gif) | [MP4](docs/gallery/highland.mp4) | [Susunan layer](docs/gallery/highland-layers.png) | [Workflow komponen](skills/animated-pixel-art-studio/references/component-workflow.md)
 
 Pada susunan layer, kolom kiri menunjukkan komponen terpisah di atas checkerboard pratinjau; kolom kanan menunjukkan hasil penumpukan bertahap. PNG aset native tetap transparan. Edit atau ganti satu PNG komponen, lalu render ke folder baru. Gunakan `studio.py layers ... --frame 35` untuk memeriksa frame lain. Builder adalah contoh aset yang dibuat lewat kode, bukan model text-to-image. **Studi ini membuktikan workflow; kualitas art-nya belum setara referensi profesional detail yang menjadi sasaran.**
 
@@ -105,16 +105,13 @@ Preset adalah titik awal. Agent tetap harus mengubah aset, komposisi, dan geraka
 
 ## Demo
 
-| Kafe hujan | Api unggun | Karakter berjalan |
-| --- | --- | --- |
-| ![Kafe](docs/gallery/rainy-cafe.gif) | ![Api unggun](docs/gallery/campfire.gif) | ![Berjalan](docs/gallery/walk-cycle.gif) |
-| [MP4](docs/gallery/rainy-cafe.mp4) | [MP4](docs/gallery/campfire.mp4) | [MP4](docs/gallery/walk-cycle.mp4) |
+Contoh starter teknis: [GIF kafe hujan](docs/gallery/rainy-cafe.gif) / [MP4](docs/gallery/rainy-cafe.mp4), [GIF api unggun](docs/gallery/campfire.gif) / [MP4](docs/gallery/campfire.mp4), [GIF karakter berjalan](docs/gallery/walk-cycle.gif) / [MP4](docs/gallery/walk-cycle.mp4).
 
 Demo original dibuat lewat kode dan berlisensi MIT. Semuanya 4 detik pada 12 fps. GIF memakai resolusi native; PNG/MP4 diperbesar dengan kelipatan bulat.
 
 ### Contoh hasil penggunaan skill
 
-![Robot Little Beacon](docs/gallery/robot.gif)
+[GIF robot Little Beacon](docs/gallery/robot.gif)
 
 Agent terpisah memakai skill ini untuk membuat **Little Beacon**, robot melayang original selama 2 detik. [MP4](docs/gallery/robot.mp4) · [Scene yang bisa diedit](examples/robot/scene.json) · [Brief](examples/robot/brief.md). Ini satu uji penggunaan yang berhasil, bukan jaminan kualitas untuk semua agent atau prompt.
 
