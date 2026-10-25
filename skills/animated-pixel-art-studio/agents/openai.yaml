@@ -1,0 +1,4 @@
+interface:
+  display_name: "Animated Pixel Art Studio"
+  short_description: "Create crisp pixel art loops, GIFs, and videos"
+  default_prompt: "Use $animated-pixel-art-studio to turn my idea into a pixel art video with editable source."
