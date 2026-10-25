@@ -15,6 +15,7 @@ import sys
 from PIL import Image, ImageChops, ImageDraw
 
 ASSETS = Path(__file__).resolve().parents[1] / "assets"
+MAX_NATIVE = 1024
 
 
 class SceneError(ValueError):
@@ -59,7 +60,7 @@ def make_sprite(spec, palette, root):
     if "image" in spec:
         with Image.open(safe_asset(root, spec["image"])) as source:
             require(source.format == "PNG", "Imported sprites must be PNG")
-            require(source.width <= 512 and source.height <= 512, "Sprite exceeds 512x512 native pixels")
+            require(source.width <= MAX_NATIVE and source.height <= MAX_NATIVE, "Sprite exceeds 1024x1024 native pixels")
             sprite = source.convert("RGBA")
         allowed = set(palette.values())
         pixels = sprite.get_flattened_data() if hasattr(sprite, "get_flattened_data") else sprite.getdata()
@@ -68,10 +69,10 @@ def make_sprite(spec, palette, root):
             require(a == 0 or (r, g, b) in allowed, "PNG contains colors outside scene palette")
         return sprite
     rows = spec["rows"]
-    require(isinstance(rows, list) and 1 <= len(rows) <= 512, "rows must contain 1..512 strings")
+    require(isinstance(rows, list) and 1 <= len(rows) <= MAX_NATIVE, "rows must contain 1..1024 strings")
     require(all(isinstance(row, str) for row in rows), "Sprite rows must be strings")
     width = len(rows[0])
-    require(1 <= width <= 512 and all(len(row) == width for row in rows), "Sprite rows must have equal nonzero widths <=512")
+    require(1 <= width <= MAX_NATIVE and all(len(row) == width for row in rows), "Sprite rows must have equal nonzero widths <=1024")
     sprite = Image.new("RGBA", (width, len(rows)))
     for y, row in enumerate(rows):
         for x, char in enumerate(row):
@@ -88,7 +89,7 @@ def load_scene(path):
     require(type(data.get("version")) is int and data["version"] == 1, "Scene version must be 1")
     require(isinstance(data.get("name"), str) and data["name"].strip(), "name must be a nonempty string")
     require(isinstance(data.get("canvas"), list) and len(data["canvas"]) == 2, "canvas must be [width, height]")
-    w, h = [integer(n, "canvas dimension", 1, 512) for n in data["canvas"]]
+    w, h = [integer(n, "canvas dimension", 1, MAX_NATIVE) for n in data["canvas"]]
     fps = integer(data.get("fps"), "fps", 1, 50)
     count = integer(data.get("frames"), "frames", 1, 600)
     scale = integer(data.get("scale", 4), "scale", 1, 12)
@@ -186,6 +187,63 @@ def changed_fraction(a, b):
     channels = difference.split()
     mask = ImageChops.lighter(ImageChops.lighter(channels[0], channels[1]), channels[2])
     return 1 - mask.histogram()[0] / (a.width * a.height)
+
+
+def review_layers(path, output, index=0):
+    """Export native transparent components and cumulative composition at a frame."""
+    data, palette, sprites = load_scene(path)
+    integer(index, "review frame", 0, data["frames"] - 1)
+    output = Path(output)
+    require(not output.exists() or (output.is_dir() and not any(output.iterdir())),
+            f"Output must be a new or empty directory: {output}")
+    output.mkdir(parents=True, exist_ok=True)
+    isolated_dir, steps_dir = output / "isolated", output / "steps"
+    isolated_dir.mkdir()
+    steps_dir.mkdir()
+    w, h = data["canvas"]
+    composite = Image.new("RGB", (w, h), palette[data["background"]])
+    checker = Image.new("RGB", (w, h), "#303748")
+    draw = ImageDraw.Draw(checker)
+    for y in range(0, h, 8):
+        for x in range(0, w, 8):
+            if (x//8 + y//8) % 2:
+                draw.rectangle((x, y, x+7, y+7), fill="#424c60")
+    ratio = min(1, 320/w, 200/h)
+    tw, th = max(1, round(w*ratio)), max(1, round(h*ratio))
+    board = Image.new("RGB", (tw*2, (th+20)*len(data["layers"])), "#151824")
+    entries = []
+    for i, layer in enumerate(data["layers"]):
+        transparent = Image.new("RGBA", (w, h))
+        x, y = position(layer, index)
+        start, end = layer.get("visible", [0, data["frames"]])
+        active = start <= index < end
+        if active:
+            if "rect" in layer:
+                rw, rh = layer["rect"]
+                ImageDraw.Draw(transparent).rectangle((x,y,x+rw-1,y+rh-1), fill=(*palette[layer["color"]],255))
+            else:
+                names = layer.get("animation", [layer.get("sprite")])
+                cel = sprites[names[(index // layer.get("frame_ticks",1)) % len(names)]]
+                transparent.paste(cel, (x,y), cel)
+        name = f"{i:03d}.png"  # Labels never become filesystem paths.
+        transparent.save(isolated_dir/name)
+        composite.paste(transparent, (0,0), transparent)
+        composite.save(steps_dir/name)
+        preview = checker.copy()
+        preview.paste(transparent, (0,0), transparent)
+        row_y = i*(th+20)
+        board.paste(preview.resize((tw,th),Image.Resampling.NEAREST),(0,row_y))
+        board.paste(composite.resize((tw,th),Image.Resampling.NEAREST),(tw,row_y))
+        label = str(layer.get("name",f"layer {i}"))
+        ImageDraw.Draw(board).text((4,row_y+th+2),f"{i:02d} {label}".encode("ascii","replace").decode(),fill="white")
+        entries.append({"order":i,"name":label,"active":active,"position":[x,y],
+                        "bbox":transparent.getbbox(),"isolated":f"isolated/{name}","step":f"steps/{name}"})
+    composite.save(output/"composite.png")
+    board.save(output/"layers.png")
+    report = {"frame":index,"canvas":[w,h],"order":"back-to-front","layers":entries,
+              "preview_note":"Board thumbnails may be reduced. Inspect native isolated PNGs for pixel quality."}
+    (output/"layers.json").write_text(json.dumps(report,indent=2)+"\n",encoding="utf-8")
+    return report
 
 
 def gif_durations(count, fps):
@@ -291,6 +349,10 @@ def main(argv=None):
     init.add_argument("--out", type=Path, required=True)
     check = sub.add_parser("validate", help="Validate a scene without rendering")
     check.add_argument("scene", type=Path)
+    layers = sub.add_parser("layers", help="Inspect isolated components and cumulative layer composition")
+    layers.add_argument("scene", type=Path)
+    layers.add_argument("--out", type=Path, required=True)
+    layers.add_argument("--frame", type=int, default=0)
     render = sub.add_parser("render", help="Render a scene and write QA evidence")
     render.add_argument("scene", type=Path)
     render.add_argument("--out", type=Path, required=True)
@@ -309,6 +371,9 @@ def main(argv=None):
         elif args.command == "validate":
             data, _, _ = load_scene(args.scene)
             print(f"Valid: {data['name']} ({data['frames']} frames at {data['fps']} fps)")
+        elif args.command == "layers":
+            report = review_layers(args.scene, args.out, args.frame)
+            print(f"Reviewed {len(report['layers'])} layers at frame {args.frame}: {args.out}")
         else:
             report = export(args.scene, args.out, args.formats.split(","), args.ffmpeg)
             print(json.dumps({"output": str(args.out.resolve()), "duration_seconds": report["duration_seconds"], "warnings": report["warnings"]}, indent=2))
