@@ -5,11 +5,11 @@ description: Create original animated pixel art scenes, sprite animations, seaml
 
 # Animated Pixel Art Studio
 
-Turn the user's idea into an actual animation and editable scene. Do not stop at prompts or storyboards unless that is the requested deliverable.
+Turn the user's idea into an actual animation and editable scene. Build detailed scenes from individually authored components, then composite them in depth order. Quality must be established in the assets before animation. Do not stop at prompts or storyboards unless that is the requested deliverable.
 
 ## Establish the brief
 
-Extract subject, action, mood, aspect ratio, duration, loop intent, and delivery format. Reuse supplied references. Ask only for missing details that materially change the concept. Otherwise state defaults and proceed: 160x90 native pixels, 12 fps, 48 frames (4 seconds), 6x integer upscale, fixed palette, looping GIF plus MP4 if FFmpeg is available. Use 90x160 for portrait, 128x128 for square.
+Extract subject, action, mood, aspect ratio, duration, loop intent, and delivery format. Reuse supplied references. Ask only for missing details that materially change the concept. For detailed landscape environments start at 640x360 native pixels, 10 fps, 70 frames (7 seconds), 3x integer upscale. For small sprite studies use 160x90, 12 fps, 48 frames, 6x upscale; use 90x160 for small portrait scenes, 128x128 for small square scenes. Use a fixed palette, looping GIF plus MP4 if FFmpeg is available. A larger canvas is capacity, not proof of better art.
 
 Write a concise `brief.md` beside the scene with composition, palette, timing, asset origin, assumptions, and deliverables. For long videos create a shot list; do not silently shorten an explicit requested duration. A shot is limited to 600 frames and 40 million native frame pixels.
 
@@ -25,11 +25,22 @@ Resolve paths relative to this SKILL.md, not the caller's working directory. `<s
 
 Use an isolated environment for dependencies. Read [scene-format.md](references/scene-format.md) before authoring JSON. Choose `rainy-cafe`, `campfire`, `walk-cycle`, or `blank` as a structural starting point. Change composition, assets, palette, and motion to satisfy the brief. Renaming a preset does not complete a custom request.
 
-For code-authored art use palette-key sprite rows, rectangles, or original PNG cels. If an image generation/editing tool is available and relevant, use it according to the host's rules. Preserve reference identity and inspect candidate assets. Generated images do not guarantee exact grids or consistent cels. Imported PNGs must already be native resolution, <=512x512, use the scene palette, and have alpha 0 or 255. Do not silently quantize or downsample a reference expected to remain exact.
+For code-authored art use palette-key sprite rows, rectangles, or original PNG cels. If an image generation/editing tool is available and relevant, use it according to the host's rules. Preserve reference identity and inspect candidate assets. Generated images do not guarantee exact grids or consistent cels. Imported PNGs must already be native resolution, <=1024x1024, use the scene palette, and have alpha 0 or 255. Do not silently quantize or downsample a reference expected to remain exact.
 
 When no image tool is available, construct original pixel assets with the renderer and explain that route. Do not require paid APIs or fabricate ComfyUI nodes. Read [integrations.md](references/integrations.md) only for external providers/editors or multi-shot work.
 
 ## Design pixels and motion
+
+For landscapes, architecture, or requests for detailed art, read [component-workflow.md](references/component-workflow.md). Write an asset inventory and a shared art contract before drawing. Author each cloud mass, mountain plane, building, tree group, foreground object, and animated effect as a separate transparent component. Review both isolated components and their cumulative composition. Keep architecture stable and animate local cels such as flags or water glints. Do not present a flattened generated image as a layered project.
+
+Use the original environment study to learn the file structure, then author components for the user's brief:
+
+```text
+<python> <skill>/scripts/build_environment.py --out <project>
+<python> <skill>/scripts/studio.py layers <project>/scene.json --out <project>/layer-review
+```
+
+Inspect `layer-review/layers.png`, native `isolated/*.png`, and `composite.png`. Revise weak components before final rendering. Distinguish the technical demonstration from a claim of matching a supplied professional reference. If a component still looks like a placeholder, improve its shape, construction and shading rather than adding random texture or extra layers.
 
 Read [art-direction.md](references/art-direction.md). Lock palette, native canvas, proportions, pivot, and light direction. Use readable silhouettes, deliberate clusters, integer coordinates, and nearest-neighbor resizing. Avoid blur, antialiasing, random texture, or per-frame palette shifts.
 
