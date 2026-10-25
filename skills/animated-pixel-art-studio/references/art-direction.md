@@ -2,7 +2,7 @@
 
 ## Composition and clusters
 
-Choose one focal action. At 160x90, silhouettes and three readable depth planes matter more than surface detail. Separate value groups and leave breathing room near edges. Compose portrait scenes directly at 90x160; never stretch a landscape frame.
+Choose one focal action or visual focus. At 160x90, silhouettes and three readable depth planes matter more than surface detail. For detailed environments use a larger native canvas such as 640x360 and author separate components according to [component-workflow.md](component-workflow.md). Separate value groups and leave breathing room near edges. Compose portrait scenes directly at a portrait native resolution; never stretch a landscape frame.
 
 Start with 8..24 colors. Share shadows across materials. Build deliberate clusters, consistent diagonal stair steps, and selective highlights. Keep outline thickness consistent. Avoid blanket dithering, pillow shading, disconnected pixel noise, and smooth gradients. Inspect native resolution and nearest-neighbor enlargement.
 

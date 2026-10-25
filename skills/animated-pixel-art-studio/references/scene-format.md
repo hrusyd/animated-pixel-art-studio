@@ -29,7 +29,7 @@ The Python validator is authoritative. Unknown object fields are rejected. JSON 
 | --- | --- |
 | `version` | Required, exactly 1 |
 | `name` | Required nonempty string |
-| `canvas` | Required [width,height], each 1..512 |
+| `canvas` | Required [width,height], each 1..1024 |
 | `fps` | Required integer 1..50 |
 | `frames` | Required integer 1..600; duration = frames/fps |
 | `scale` | Integer 1..12, default 4; scaled dimensions <=4096 |
@@ -43,7 +43,9 @@ Width * height * frames must be <=40,000,000. This bounds routine workloads, not
 
 ## Sprites and layers
 
-A sprite has exactly one of `rows` or `image`. Rows are equal-width strings using palette keys and `.` for transparency. PNG image paths must remain inside the scene directory; escaping symlinks and traversal are rejected. PNGs must be native resolution, <=512x512, binary alpha, and exact palette colors. No automatic resampling or palette reduction occurs.
+A sprite has exactly one of `rows` or `image`. Rows are equal-width strings using palette keys and `.` for transparency. PNG image paths must remain inside the scene directory; escaping symlinks and traversal are rejected. PNGs must be native resolution, <=1024x1024, binary alpha, and exact palette colors. No automatic resampling or palette reduction occurs.
+
+Use `studio.py layers scene.json --out review --frame 0` to export isolated native RGBA layers and cumulative native RGB composition. `layers.png` is a two-column inspection board, `composite.png` the final native frame, and `layers.json` maps labels, indices, bounds and placements to numeric filenames. This command refuses nonempty output folders. See [component workflow](component-workflow.md) for asset authoring and inspection.
 
 Each layer has exactly one of:
 
