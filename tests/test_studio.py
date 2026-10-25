@@ -162,6 +162,66 @@ class StudioTests(unittest.TestCase):
         self.assertEqual(result.returncode,2)
         self.assertIn("fps",result.stderr)
 
+    def test_large_component_canvas_and_workload_limits(self):
+        self.scene.update(canvas=[640,360],frames=70,fps=10,scale=3)
+        Image.new("RGBA",(640,360),(248,232,200,255)).save(self.root/"large.png")
+        self.scene["sprites"]["dot"]={"image":"large.png"}
+        data,pal,sprites=studio.load_scene(self.write())
+        self.assertEqual(studio.render_frame(data,pal,sprites,0).size,(640,360))
+        self.scene["canvas"]=[1025,360]
+        with self.assertRaisesRegex(studio.SceneError,"canvas dimension"):
+            studio.load_scene(self.write())
+        self.scene.update(canvas=[1024,1024],frames=70,scale=1)
+        with self.assertRaisesRegex(studio.SceneError,"40 million"):
+            studio.load_scene(self.write())
+
+    def test_layer_review_matches_renderer_and_preserves_alpha(self):
+        self.scene["layers"]=[{"name":"../../untrusted-label","rect":[8,8],"color":"a"},
+                              {"sprite":"dot","x":-1,"y":2},
+                              {"sprite":"dot","visible":[5,8]}]
+        path=self.write(); data,pal,sprites=studio.load_scene(path)
+        report=studio.review_layers(path,self.root/"review",0)
+        self.assertEqual(report["layers"][0]["isolated"],"isolated/000.png")
+        with Image.open(self.root/"review/composite.png") as final:
+            self.assertEqual(final.tobytes(),studio.render_frame(data,pal,sprites,0).tobytes())
+        with Image.open(self.root/"review/isolated/001.png") as component:
+            self.assertEqual(component.mode,"RGBA")
+            self.assertEqual(component.getpixel((0,2))[3],0)
+            self.assertEqual(component.getpixel((0,3))[3],255)
+        self.assertFalse(report["layers"][2]["active"])
+        self.assertIsNone(report["layers"][2]["bbox"])
+        with self.assertRaisesRegex(studio.SceneError,"empty"):
+            studio.review_layers(path,self.root/"review",0)
+        with self.assertRaisesRegex(studio.SceneError,"review frame"):
+            studio.review_layers(path,self.root/"bad",12)
+
+    def test_layer_review_selects_current_cel_and_motion(self):
+        self.scene["sprites"]["dark"]={"rows":["00","00"]}
+        self.scene["layers"]=[{"animation":["dot","dark"],"frame_ticks":2,
+                                "motion":{"keys":[[0,0,0],[6,4,3],[12,0,0]]}}]
+        path=self.write(); data,pal,sprites=studio.load_scene(path)
+        studio.review_layers(path,self.root/"moving",3)
+        with Image.open(self.root/"moving/composite.png") as final:
+            self.assertEqual(final.tobytes(),studio.render_frame(data,pal,sprites,3).tobytes())
+
+    def test_environment_components_are_portable_and_deterministic(self):
+        spec=importlib.util.spec_from_file_location("environment_builder",ROOT/"skills/animated-pixel-art-studio/scripts/build_environment.py")
+        builder=importlib.util.module_from_spec(spec);spec.loader.exec_module(builder)
+        path=builder.build(self.root/"environment")
+        data,pal,sprites=studio.load_scene(path)
+        self.assertEqual(data["canvas"],[640,360])
+        self.assertEqual(len(data["layers"]),14)
+        self.assertEqual(len(pal),42)
+        second=builder.build(self.root/"environment-again")
+        other,opal,osprites=studio.load_scene(second)
+        for frame in [0,7,35,69]:
+            self.assertEqual(studio.render_frame(data,pal,sprites,frame).tobytes(),
+                             studio.render_frame(other,opal,osprites,frame).tobytes())
+        static={k:v.tobytes() for k,v in sprites.items() if not k.startswith(("11-","12-"))}
+        self.assertTrue(static)
+        with self.assertRaisesRegex(ValueError,"empty"):
+            builder.build(path.parent)
+
     @unittest.skipUnless(shutil.which("ffmpeg") and shutil.which("ffprobe"),"FFmpeg/ffprobe not installed")
     def test_mp4_actual_metadata_and_odd_padding(self):
         self.scene["canvas"]=[9,7];self.scene["scale"]=1
