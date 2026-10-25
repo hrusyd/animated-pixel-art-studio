@@ -4,7 +4,7 @@
 
 [Bahasa Indonesia](README.id.md) · [Agent skill](skills/animated-pixel-art-studio/SKILL.md) · [Scene format](skills/animated-pixel-art-studio/references/scene-format.md) · [MIT license](LICENSE)
 
-![Rainy cafe pixel art example](docs/gallery/rainy-cafe.png)
+![Component-based environment study](docs/gallery/highland.png)
 
 Describe the scene to an agent, let it author sprites and motion, and render locally. The repository supplies the production workflow, a small deterministic renderer, and original starter scenes. It does **not** contain a trained text-to-video model or a graphical editor.
 
@@ -16,6 +16,29 @@ Describe the scene to an agent, let it author sprites and motion, and render loc
 - Three original demo scenes: rainy cafe, campfire, and a simple walk cycle, plus a blank starter.
 - No API key, GPU, paid model, or network access needed for rendering after dependencies are installed.
 - Automated tests and GitHub Actions configuration for Windows, macOS, Linux, and video encoding.
+- A component-first environment workflow, a reproducible 640x360 layered study, and isolated/cumulative layer inspection.
+
+## Build components, then stack layers
+
+Author the sky, cloud masses, mountain planes, buildings, tree groups, water and foreground separately. Give them one palette, pixel scale, perspective and light direction. Review each asset, composite it in depth order, then animate local cels. A detailed scene needs well-designed components; increasing layer count or output resolution does not create artistic quality.
+
+```sh
+python skills/animated-pixel-art-studio/scripts/build_environment.py --out work/highland
+python studio.py layers work/highland/scene.json --out output/highland-layers
+python studio.py render work/highland/scene.json --out output/highland --formats gif,mp4
+```
+
+The builder writes **14 component layers**, individual transparent PNGs/cels, `art-plan.json` and an editable `scene.json`. The study uses a shared 42-color palette, 640x360 native pixels, 10 fps and 7 seconds. MP4 is enlarged to 1920x1080. Omit `mp4` when FFmpeg is unavailable.
+
+![Highland Waystation loop](docs/gallery/highland.gif)
+
+[MP4](docs/gallery/highland.mp4) | [Layer breakdown](docs/gallery/highland-layers.png) | [Component workflow](skills/animated-pixel-art-studio/references/component-workflow.md)
+
+In the layer breakdown, the left column shows each component on a preview checkerboard and the right shows the cumulative composition. Native isolated assets retain transparency. Edit or replace a component PNG and render again to a new directory. `studio.py layers ... --frame 35` reviews another moment. The builder is a deterministic authored example, not a text-to-image model. **This study demonstrates the workflow; it does not yet match the detailed professional reference that motivated it.**
+
+Agent prompt:
+
+> Build the art as independent components before compositing. Write a shared art contract, author transparent assets for each depth plane and object, inspect each component and the assembled still, then animate only local effects. Preserve editable PNGs and scene JSON. Improve weak assets instead of adding random detail. Do not claim professional-reference parity without a visual comparison.
 
 ## Try it in a few commands
 
@@ -116,7 +139,7 @@ Read the [scene specification](skills/animated-pixel-art-studio/references/scene
 - GIFs use native size and centisecond timing. PNG frames are lossless masters; MP4 color edges may change through H.264/yuv420p compression.
 - MP4 output is silent. Audio, subtitles, sprite-sheet slicing, multi-shot assembly, generative models, ComfyUI, and Aseprite integrations are separate workflows, not built-in features.
 - A looping GIF flag does not prove a seamless loop. The report contains diagnostics, and the skill requires visual inspection.
-- Resource limits: canvas <=512x512, <=600 frames, <=40 million native frame pixels, <=64 palette colors. Split larger work into shots.
+- Resource limits: canvas and imported components <=1024x1024, <=600 frames, <=40 million native frame pixels, <=64 palette colors. Split larger work into shots.
 - Imported sprites must be native PNGs with binary alpha and exact palette colors. Use only assets you have permission to distribute.
 
 ## Development

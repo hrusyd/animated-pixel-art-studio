@@ -4,7 +4,7 @@
 
 [English](README.md) · [Skill agent](skills/animated-pixel-art-studio/SKILL.md) · [Format scene](skills/animated-pixel-art-studio/references/scene-format.md) · [Lisensi MIT](LICENSE)
 
-![Contoh kafe pixel art](docs/gallery/rainy-cafe.png)
+![Studi lingkungan dari komponen terpisah](docs/gallery/highland.png)
 
 Jelaskan ide ke AI agent. Agent membuat sprite, komposisi, dan gerakan, lalu menjalankan renderer lokal. Repo ini berisi workflow dan alat render, bukan model text-to-video atau aplikasi editor grafis.
 
@@ -16,6 +16,29 @@ Jelaskan ide ke AI agent. Agent membuat sprite, komposisi, dan gerakan, lalu men
 - Tiga demo original: kafe hujan, api unggun, dan karakter berjalan. Ada juga starter kosong.
 - Render tanpa API key, GPU, atau model berbayar setelah dependensi terpasang.
 - Pengujian otomatis dan konfigurasi GitHub Actions.
+- Workflow pembuatan komponen, studi lingkungan 640x360 yang bisa dibangun ulang, dan pemeriksaan layer terpisah maupun bertahap.
+
+## Buat komponen, lalu tumpuk menjadi layer
+
+Buat langit, massa awan, bidang pegunungan, bangunan, kelompok pohon, air, dan foreground secara terpisah. Gunakan satu palet, ukuran piksel, perspektif, dan arah cahaya. Periksa tiap aset, susun menurut kedalaman, lalu animasikan bagian yang bergerak. Kualitas harus berasal dari desain komponen, bukan sekadar jumlah layer atau resolusi output.
+
+```sh
+python skills/animated-pixel-art-studio/scripts/build_environment.py --out work/highland
+python studio.py layers work/highland/scene.json --out output/highland-layers
+python studio.py render work/highland/scene.json --out output/highland --formats gif,mp4
+```
+
+Builder menghasilkan **14 layer komponen**, PNG/cel transparan terpisah, `art-plan.json`, dan `scene.json` yang bisa diedit. Studi ini menggunakan 42 warna bersama, resolusi native 640x360, 10 fps, dan durasi 7 detik. MP4 diperbesar menjadi 1920x1080. Hapus `mp4` dari perintah bila FFmpeg belum tersedia.
+
+![Animasi Highland Waystation](docs/gallery/highland.gif)
+
+[MP4](docs/gallery/highland.mp4) | [Susunan layer](docs/gallery/highland-layers.png) | [Workflow komponen](skills/animated-pixel-art-studio/references/component-workflow.md)
+
+Pada susunan layer, kolom kiri menunjukkan komponen terpisah di atas checkerboard pratinjau; kolom kanan menunjukkan hasil penumpukan bertahap. PNG aset native tetap transparan. Edit atau ganti satu PNG komponen, lalu render ke folder baru. Gunakan `studio.py layers ... --frame 35` untuk memeriksa frame lain. Builder adalah contoh aset yang dibuat lewat kode, bukan model text-to-image. **Studi ini membuktikan workflow; kualitas art-nya belum setara referensi profesional detail yang menjadi sasaran.**
+
+Prompt untuk agent:
+
+> Buat art dari komponen mandiri sebelum disusun. Tulis aturan visual bersama, buat aset transparan tiap bidang kedalaman dan objek, periksa komponen serta komposisi diam, lalu animasikan efek lokal. Sertakan PNG yang bisa diedit dan scene JSON. Perbaiki aset yang lemah, jangan menutupinya dengan detail acak. Jangan mengklaim setara referensi profesional tanpa perbandingan visual.
 
 ## Mulai
 
@@ -105,7 +128,7 @@ python studio.py render examples/robot/scene.json --out output/robot --formats p
 - MP4 tidak memiliki audio. Musik, subtitle, pemotongan sprite sheet, penyambungan shot, ComfyUI, model generatif, dan Aseprite bukan fitur bawaan.
 - PNG adalah master lossless. Kompresi MP4 dapat mengubah tepi warna. GIF menggunakan satuan waktu centisecond.
 - Label looping tidak menjamin sambungan mulus. Laporan otomatis tetap perlu dilengkapi pemeriksaan visual.
-- Kanvas maksimal 512x512, maksimal 600 frame dan 40 juta native frame pixels, maksimal 64 warna. Pecah video besar menjadi beberapa shot.
+- Kanvas dan komponen impor maksimal 1024x1024, maksimal 600 frame dan 40 juta native frame pixels, maksimal 64 warna. Pecah video besar menjadi beberapa shot.
 - PNG impor harus memakai resolusi native, palet scene, dan alpha biner. Gunakan aset yang boleh kamu gunakan/distribusikan.
 
 Detail teknis ada di [format scene](skills/animated-pixel-art-studio/references/scene-format.md), [art direction](skills/animated-pixel-art-studio/references/art-direction.md), dan [integrasi opsional](skills/animated-pixel-art-studio/references/integrations.md).
